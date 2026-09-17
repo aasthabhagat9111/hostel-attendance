@@ -1,5 +1,5 @@
-// Configure this to your computer's IP address on the local network
-const BASE_URL = 'http://YOUR_COMPUTER_IP:3000';
+// Use the deployed app's own API in production and localhost during development.
+const BASE_URL = window.location.origin;
 
 // State Variables
 let currentDate = getTodayDateString();
@@ -12,7 +12,7 @@ let debounceTimer = null;
 // Initialize App on DOM Load
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('attendanceDate').value = currentDate;
-  
+
   // Date change listener
   document.getElementById('attendanceDate').addEventListener('change', (e) => {
     currentDate = e.target.value;
@@ -34,7 +34,7 @@ function getTodayDateString() {
 
 // Debounce helper
 function debounce(func, delay = 300) {
-  return function(...args) {
+  return function (...args) {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => func.apply(this, args), delay);
   };
@@ -249,41 +249,37 @@ function renderStudentCardRow(s) {
       <!-- Action Status Buttons -->
       <div class="flex items-center space-x-1">
         <button onclick="setStudentStatus(${s.id}, 'PRESENT')" 
-          class="px-2.5 py-1.5 rounded-lg font-bold border transition-all flex items-center gap-1 ${
-            status === 'PRESENT'
-              ? 'bg-emerald-600 text-white border-emerald-600 btn-status-active shadow-md'
-              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300'
-          }">
+          class="px-2.5 py-1.5 rounded-lg font-bold border transition-all flex items-center gap-1 ${status === 'PRESENT'
+      ? 'bg-emerald-600 text-white border-emerald-600 btn-status-active shadow-md'
+      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300'
+    }">
           <i class="fa-solid fa-circle-check"></i>
           <span>Present</span>
         </button>
 
         <button onclick="setStudentStatus(${s.id}, 'ABSENT')" 
-          class="px-2.5 py-1.5 rounded-lg font-bold border transition-all flex items-center gap-1 ${
-            status === 'ABSENT'
-              ? 'bg-rose-600 text-white border-rose-600 btn-status-active shadow-md'
-              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300'
-          }">
+          class="px-2.5 py-1.5 rounded-lg font-bold border transition-all flex items-center gap-1 ${status === 'ABSENT'
+      ? 'bg-rose-600 text-white border-rose-600 btn-status-active shadow-md'
+      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300'
+    }">
           <i class="fa-solid fa-circle-xmark"></i>
           <span>Absent</span>
         </button>
 
         <button onclick="setStudentStatus(${s.id}, 'LEAVE')" 
-          class="px-2.5 py-1.5 rounded-lg font-bold border transition-all flex items-center gap-1 ${
-            status === 'LEAVE'
-              ? 'bg-amber-500 text-white border-amber-500 btn-status-active shadow-md'
-              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300'
-          }">
+          class="px-2.5 py-1.5 rounded-lg font-bold border transition-all flex items-center gap-1 ${status === 'LEAVE'
+      ? 'bg-amber-500 text-white border-amber-500 btn-status-active shadow-md'
+      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300'
+    }">
           <i class="fa-solid fa-plane-departure"></i>
           <span>Leave</span>
         </button>
 
         <button onclick="setStudentStatus(${s.id}, 'LATE')" 
-          class="px-2.5 py-1.5 rounded-lg font-bold border transition-all flex items-center gap-1 ${
-            status === 'LATE'
-              ? 'bg-orange-500 text-white border-orange-500 btn-status-active shadow-md'
-              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300'
-          }">
+          class="px-2.5 py-1.5 rounded-lg font-bold border transition-all flex items-center gap-1 ${status === 'LATE'
+      ? 'bg-orange-500 text-white border-orange-500 btn-status-active shadow-md'
+      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300'
+    }">
           <i class="fa-solid fa-clock"></i>
           <span>Late</span>
         </button>
@@ -711,7 +707,7 @@ function handleCSVFileSelect(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = async function(e) {
+  reader.onload = async function (e) {
     const text = e.target.result;
     const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
