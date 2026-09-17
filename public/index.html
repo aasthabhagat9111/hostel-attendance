@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hostel Night Attendance Manager</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              900: '#14532d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .btn-status-active {
+      transform: scale(1.03);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col pb-12">
+
+  <!-- TOP HEADER -->
+  <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="bg-emerald-500 text-slate-900 p-2.5 rounded-xl text-xl font-bold">
+          <i class="fa-solid fa-hotel"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold leading-tight">Hostel Night Attendance</h1>
+          <p class="text-xs text-slate-400">300 Students Night Roll Call System</p>
+        </div>
+      </div>
+
+      <!-- Date selector & Quick Actions -->
+      <div class="flex items-center space-x-3 text-sm">
+        <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5">
+          <i class="fa-regular fa-calendar text-emerald-400 mr-2"></i>
+          <input type="date" id="attendanceDate" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
+        </div>
+        <button id="btnQuickMarkAllPresent" onclick="quickMarkAllPresent()" class="hidden sm:flex items-center bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3.5 py-1.5 rounded-lg text-xs transition shadow">
+          <i class="fa-solid fa-check-double mr-1.5"></i> Mark Unmarked Present
+        </button>
+      </div>
+    </div>
+
+    <!-- STATS SUMMARY BAR -->
+    <div class="bg-slate-800 border-t border-slate-700/80 py-2.5 px-4">
+      <div class="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+        <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/50">
+          <span class="text-slate-400 block">Total Students</span>
+          <span id="statTotal" class="text-base font-bold text-white">0</span>
+        </div>
+        <div class="bg-emerald-950/40 border border-emerald-800/40 p-2 rounded-lg">
+          <span class="text-emerald-400 block"><i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>Present</span>
+          <span id="statPresent" class="text-base font-bold text-emerald-400">0</span>
+        </div>
+        <div class="bg-rose-950/40 border border-rose-800/40 p-2 rounded-lg">
+          <span class="text-rose-400 block"><i class="fa-solid fa-circle-xmark text-rose-500 mr-1"></i>Absent</span>
+          <span id="statAbsent" class="text-base font-bold text-rose-400">0</span>
+        </div>
+        <div class="bg-amber-950/40 border border-amber-800/40 p-2 rounded-lg">
+          <span class="text-amber-400 block"><i class="fa-solid fa-plane-departure text-amber-500 mr-1"></i>On Leave / Late</span>
+          <span id="statLeaveLate" class="text-base font-bold text-amber-400">0</span>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-700/50 p-2 rounded-lg col-span-2 sm:col-span-1">
+          <span class="text-slate-400 block">Pending / Unmarked</span>
+          <span id="statUnmarked" class="text-base font-bold text-slate-300">0</span>
+        </div>
+      </div>
+
+      <!-- Completion progress bar -->
+      <div class="max-w-7xl mx-auto mt-2 flex items-center gap-2">
+        <div class="flex-1 bg-slate-700 rounded-full h-2 overflow-hidden">
+          <div id="progressBar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+        <span id="progressText" class="text-[11px] font-semibold text-slate-300 min-w-[36px] text-right">0%</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <nav class="bg-white border-b border-slate-200 sticky top-[120px] z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-2 flex space-x-1 sm:space-x-4 overflow-x-auto scrollbar-thin">
+      <button onclick="switchTab('rollcall')" id="tabBtn-rollcall" class="tab-btn px-4 py-3 text-sm font-semibold border-b-2 border-emerald-600 text-emerald-600 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-clipboard-user"></i>
+        <span>Roll Call</span>
+      </button>
+      <button onclick="switchTab('absentees')" id="tabBtn-absentees" class="tab-btn px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-triangle-exclamation text-rose-500"></i>
+        <span>Absentees</span>
+        <span id="absenteeBadge" class="bg-rose-500 text-white text-xs px-2 py-0.5 rounded-full hidden">0</span>
+      </button>
+      <button onclick="switchTab('students')" id="tabBtn-students" class="tab-btn px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-users"></i>
+        <span>300 Students</span>
+      </button>
+      <button onclick="switchTab('leaves')" id="tabBtn-leaves" class="tab-btn px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-umbrella-beach"></i>
+        <span>Leaves</span>
+      </button>
+      <button onclick="switchTab('reports')" id="tabBtn-reports" class="tab-btn px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-chart-line"></i>
+        <span>Reports</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 py-6 flex-1 w-full">
+
+    <!-- ================= TAB 1: ROLL CALL ================= -->
+    <section id="tab-rollcall" class="tab-content space-y-4">
+
+      <!-- FILTERS & VIEW CONTROLS -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        
+        <!-- Filter dropdowns -->
+        <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
+          <select id="filterBlock" onchange="loadAttendance()" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-lg px-3 py-2 font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <option value="">All Blocks</option>
+            <option value="Block A">Block A</option>
+            <option value="Block B">Block B</option>
+            <option value="Block C">Block C</option>
+          </select>
+
+          <select id="filterFloor" onchange="loadAttendance()" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-lg px-3 py-2 font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <option value="">All Floors</option>
+            <option value="Ground Floor">Ground Floor</option>
+            <option value="Floor 1">Floor 1</option>
+            <option value="Floor 2">Floor 2</option>
+            <option value="Floor 3">Floor 3</option>
+            <option value="Floor 4">Floor 4</option>
+          </select>
+
+          <div class="relative flex-1 min-w-[180px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+            <input type="text" id="searchRollCall" oninput="debounce(loadAttendance, 300)()" placeholder="Search Name, Room or Roll No..." class="w-full bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-lg pl-9 pr-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Toggles & View Mode -->
+        <div class="flex items-center space-x-3 text-sm">
+          <label class="inline-flex items-center cursor-pointer select-none">
+            <input type="checkbox" id="unmarkedOnly" onchange="loadAttendance()" class="sr-only peer">
+            <div class="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+            <span class="ml-2 text-xs font-semibold text-slate-600">Unmarked Only</span>
+          </label>
+
+          <div class="bg-slate-100 p-1 rounded-lg border border-slate-200 flex space-x-1">
+            <button id="viewBtnRoom" onclick="setRollCallView('room')" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-white text-slate-800 shadow-xs">
+              <i class="fa-solid fa-door-closed mr-1"></i> Rooms
+            </button>
+            <button id="viewBtnList" onclick="setRollCallView('list')" class="px-2.5 py-1 text-xs font-semibold rounded-md text-slate-600 hover:text-slate-900">
+              <i class="fa-solid fa-list mr-1"></i> List
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK STATS HEADER FOR SELECTED FILTER -->
+      <div id="filterInfoBanner" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-2 rounded-lg text-xs font-medium flex items-center justify-between">
+        <span><i class="fa-solid fa-info-circle mr-1.5"></i> Showing students for night roll call. Tap buttons to mark status instantly.</span>
+        <span id="filteredStudentCount" class="font-bold">0 students</span>
+      </div>
+
+      <!-- ROLL CALL CONTAINER (Container for Room Cards or List View) -->
+      <div id="rollCallContainer" class="space-y-4">
+        <!-- Rendered dynamically via JS -->
+      </div>
+
+    </section>
+
+    <!-- ================= TAB 2: ABSENTEES ================= -->
+    <section id="tab-absentees" class="tab-content hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-slate-900"><i class="fa-solid fa-triangle-exclamation text-rose-500 mr-2"></i>Tonight's Absentees & Late Arrivals</h2>
+          <p class="text-xs text-slate-500">Quick contact students or parents directly via WhatsApp or Phone</p>
+        </div>
+        <button onclick="exportAbsenteesCSV()" class="bg-slate-800 text-white hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition">
+          <i class="fa-solid fa-download mr-1"></i> Export Absentees
+        </button>
+      </div>
+
+      <div id="absenteeList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: STUDENTS DIRECTORY ================= -->
+    <section id="tab-students" class="tab-content hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-900"><i class="fa-solid fa-users text-emerald-600 mr-2"></i>Hostel Students Master List</h2>
+          <p class="text-xs text-slate-500">Manage 300 student records, rooms, blocks, and parent phone numbers</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="openModal('addStudentModal')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-lg text-xs font-semibold shadow transition">
+            <i class="fa-solid fa-plus mr-1"></i> Add Student
+          </button>
+          <button onclick="openModal('importCSVModal')" class="bg-slate-700 hover:bg-slate-600 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition">
+            <i class="fa-solid fa-file-import mr-1"></i> Import CSV
+          </button>
+          <button onclick="resetDemoStudents()" class="bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 px-3.5 py-2 rounded-lg text-xs font-semibold transition">
+            <i class="fa-solid fa-rotate-left mr-1"></i> Reset 300 Demo
+          </button>
+        </div>
+      </div>
+
+      <!-- Search in directory -->
+      <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+        <input type="text" id="studentSearchInput" oninput="debounce(loadStudentsDirectory, 300)()" placeholder="Filter student list by name, roll no, room or block..." class="w-full bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+      </div>
+
+      <!-- Students Table -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-100 border-b border-slate-200 font-bold text-slate-700">
+                <th class="p-3">Roll No</th>
+                <th class="p-3">Name</th>
+                <th class="p-3">Block</th>
+                <th class="p-3">Floor</th>
+                <th class="p-3">Room</th>
+                <th class="p-3">Phone</th>
+                <th class="p-3">Parent Phone</th>
+                <th class="p-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="studentsTableBody" class="divide-y divide-slate-100">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: LEAVE REQUESTS ================= -->
+    <section id="tab-leaves" class="tab-content hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-slate-900"><i class="fa-solid fa-umbrella-beach text-amber-500 mr-2"></i>Approved Home / Outpass Leaves</h2>
+          <p class="text-xs text-slate-500">Students on leave are automatically pre-flagged as ON LEAVE during roll call</p>
+        </div>
+        <button onclick="openModal('addLeaveModal')" class="bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2 rounded-lg text-xs font-semibold shadow transition">
+          <i class="fa-solid fa-plus mr-1"></i> Grant New Leave
+        </button>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-100 border-b border-slate-200 font-bold text-slate-700">
+                <th class="p-3">Student Name</th>
+                <th class="p-3">Roll No</th>
+                <th class="p-3">Block / Room</th>
+                <th class="p-3">Start Date</th>
+                <th class="p-3">End Date</th>
+                <th class="p-3">Reason</th>
+                <th class="p-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="leavesTableBody" class="divide-y divide-slate-100">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 5: REPORTS & EXPORT ================= -->
+    <section id="tab-reports" class="tab-content hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-900"><i class="fa-solid fa-chart-pie text-emerald-600 mr-2"></i>Attendance Reports & Data Export</h2>
+          <p class="text-xs text-slate-500">Download CSV sheets for hostel administration</p>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <button onclick="downloadDailyCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition">
+            <i class="fa-solid fa-file-excel mr-1.5"></i> Download Daily Sheet (CSV)
+          </button>
+        </div>
+      </div>
+
+      <!-- Monthly Percentage Grid -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+        <div class="flex items-center justify-between border-b pb-3">
+          <h3 class="font-bold text-sm text-slate-800">Monthly Student Percentage Summary</h3>
+          <div class="flex items-center space-x-2">
+            <label for="reportMonth" class="text-xs font-semibold text-slate-600">Select Month:</label>
+            <input type="month" id="reportMonth" onchange="loadMonthlyReport()" class="bg-slate-50 border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 font-semibold">
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-100 border-b border-slate-200 font-bold text-slate-700">
+                <th class="p-3">Roll No</th>
+                <th class="p-3">Name</th>
+                <th class="p-3">Block/Room</th>
+                <th class="p-3">Days Marked</th>
+                <th class="p-3">Present</th>
+                <th class="p-3">Absent</th>
+                <th class="p-3">Leave</th>
+                <th class="p-3">Attendance %</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyReportBody" class="divide-y divide-slate-100">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- ADD STUDENT MODAL -->
+  <div id="addStudentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between border-b pb-3 mb-4">
+        <h3 class="font-bold text-slate-900 text-base">Add New Student</h3>
+        <button onclick="closeModal('addStudentModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="addStudentForm" onsubmit="handleAddStudent(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Roll Number *</label>
+          <input type="text" id="newRollNo" required placeholder="e.g. 2024HST301" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Full Name *</label>
+          <input type="text" id="newName" required placeholder="Student Full Name" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Block *</label>
+            <select id="newBlock" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <option value="Block A">Block A</option>
+              <option value="Block B">Block B</option>
+              <option value="Block C">Block C</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Floor *</label>
+            <select id="newFloor" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <option value="Ground Floor">Ground</option>
+              <option value="Floor 1">Floor 1</option>
+              <option value="Floor 2">Floor 2</option>
+              <option value="Floor 3">Floor 3</option>
+              <option value="Floor 4">Floor 4</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Room No *</label>
+            <input type="text" id="newRoomNo" required placeholder="101" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Student Phone</label>
+          <input type="text" id="newPhone" placeholder="+91 9876543210" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Parent Phone</label>
+          <input type="text" id="newParentPhone" placeholder="+91 9876543210" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        </div>
+
+        <div class="pt-3 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('addStudentModal')" class="px-4 py-2 border rounded-lg font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-500">Save Student</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD LEAVE MODAL -->
+  <div id="addLeaveModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between border-b pb-3 mb-4">
+        <h3 class="font-bold text-slate-900 text-base">Grant Student Leave / Outpass</h3>
+        <button onclick="closeModal('addLeaveModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="addLeaveForm" onsubmit="handleAddLeave(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Select Student *</label>
+          <select id="leaveStudentId" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Start Date *</label>
+            <input type="date" id="leaveStartDate" required class="w-full border border-slate-300 rounded-lg p-2.5">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">End Date *</label>
+            <input type="date" id="leaveEndDate" required class="w-full border border-slate-300 rounded-lg p-2.5">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Reason / Notes</label>
+          <textarea id="leaveReason" rows="2" placeholder="e.g. Home Visit / Outpass" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="pt-3 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('addLeaveModal')" class="px-4 py-2 border rounded-lg font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-500">Approve Leave</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- IMPORT CSV MODAL -->
+  <div id="importCSVModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between border-b pb-3 mb-4">
+        <h3 class="font-bold text-slate-900 text-base">Import Students from CSV</h3>
+        <button onclick="closeModal('importCSVModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <p class="text-slate-600">Upload a CSV file containing student records. Columns should include: <br>
+          <code class="bg-slate-100 p-1 rounded border text-[11px] block mt-1">rollNo, name, roomNo, floor, block, phone, parentPhone</code>
+        </p>
+
+        <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:bg-slate-50 transition cursor-pointer" onclick="document.getElementById('csvFileInput').click()">
+          <i class="fa-solid fa-file-csv text-4xl text-slate-400 mb-2"></i>
+          <p class="font-semibold text-slate-700">Click to select CSV file</p>
+          <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCSVFileSelect(event)">
+        </div>
+
+        <div id="csvStatus" class="text-xs font-semibold text-emerald-600 hidden"></div>
+
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('importCSVModal')" class="px-4 py-2 border rounded-lg font-medium text-slate-600 hover:bg-slate-50">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 text-xs z-50 transition-all transform translate-y-20 opacity-0 pointer-events-none">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+    <span id="toastMessage">Attendance updated!</span>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

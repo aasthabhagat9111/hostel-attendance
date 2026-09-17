@@ -1,0 +1,23 @@
+{
+  "name": "HostAttend",
+  "version": "1.0.0",
+  "description": "Hostel Night Attendance Manager",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "electron": "^44.4.1"
+  }
+}
